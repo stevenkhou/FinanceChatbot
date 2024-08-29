@@ -50,8 +50,6 @@ def plot_stock_price(ticker):
     plt.savefig('stock.png')
     plt.close()
 
-
-
 functions = [
     {
         'name': 'get_stock_price',
@@ -156,6 +154,7 @@ available_functions = {
     'plot_stock_price': plot_stock_price
 }
 
+#Initialize Streamlit session state for storing messages
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 
@@ -165,8 +164,10 @@ user_input = st.text_input('Your input:')
 
 if user_input:
     try:
+        #Add user input to session state messages
         st.session_state['messages'].append({'role': 'user', 'content': f'{user_input}'})
 
+        #Create a response from OpenAI ChatCompletion with potential function calls
         response = openai.ChatCompletion.create(
             model = 'gpt-3.5-turbo',
             messages = st.session_state['messages'],
@@ -177,6 +178,7 @@ if user_input:
         response_message = response['choices'][0]['message']
 
         if response_message.get('function_call'):
+            #Extract function name and arguments from response            
             function_name = response_message['function_call']['name']
             function_args = json.loads(response_message['function_call']['arguments'])
             if function_name in ['get_stock_price', 'calculate_RSI', 'calculate_MACD', 'plot_stock_price']:
@@ -190,6 +192,7 @@ if user_input:
             if function_name == 'plot_stock_price':
                 st.image('stock.png')
             else:
+                #Append response and call second completion if needed
                 st.session_state['messages'].append(response_message)
                 st.session_state['messages'].append(
                     {
